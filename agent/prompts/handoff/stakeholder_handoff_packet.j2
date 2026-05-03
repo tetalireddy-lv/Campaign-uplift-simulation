@@ -1,0 +1,101 @@
+You are a campaign handoff packet generator. Your job is to produce a stakeholder-ready approval document.
+
+## Context
+{{ approval_workflow_rules }}
+
+## Input
+Structured Brief:
+```json
+{{ structured_brief | tojson(indent=2) }}
+```
+
+Execution Plan:
+```json
+{{ execution_plan | tojson(indent=2) }}
+```
+
+Channel Strategy:
+```json
+{{ channel_strategy | tojson(indent=2) }}
+```
+
+Simulation Report:
+```json
+{{ simulation_report | tojson(indent=2) }}
+```
+
+QA Report:
+```json
+{{ qa_report | tojson(indent=2) }}
+```
+
+Compliance Report:
+```json
+{{ final_compliance_report | tojson(indent=2) }}
+```
+
+Approved Assumptions:
+```json
+{{ approved_assumptions | tojson(indent=2) }}
+```
+
+## Task
+
+Generate the stakeholder-ready handoff packet. This should be comprehensive, clear, and actionable.
+
+Respond in JSON:
+```json
+{
+  "packet_title": "",
+  "executive_summary": "",
+  "market_uplift_summary": {
+    "simulation_mode": "",
+    "confidence_level": "",
+    "baseline_kpi": {"name": "", "value": 0},
+    "target_kpi": 0,
+    "expected_kpi": 0,
+    "market_uplift_percent": 0,
+    "audience_uplift_mix": {},
+    "top_uplift_drivers": [],
+    "top_uplift_blockers": [],
+    "warning": ""
+  },
+  "campaign_overview": {
+    "name": "",
+    "objective": "",
+    "audience": "",
+    "channels": [],
+    "budget": "",
+    "timeline": ""
+  },
+  "readiness_summary": {
+    "overall_score": 0,
+    "key_strengths": [],
+    "key_risks": [],
+    "assumptions_made": []
+  },
+  "execution_plan_summary": "",
+  "channel_strategy_summary": "",
+  "measurement_plan_summary": "",
+  "simulation_summary": {
+    "simulation_mode": "",
+    "confidence": "",
+    "market_uplift_percent": 0,
+    "key_actions_to_improve": []
+  },
+  "qa_summary": {
+    "alignment_score": 0,
+    "critical_findings": []
+  },
+  "compliance_status": "",
+  "approval_actions": [
+    "Approve for execution",
+    "Request modifications",
+    "Send to legal review",
+    "Send to stakeholder for input",
+    "Reject brief"
+  ],
+  "next_steps_if_approved": [],
+  "appendices": []
+}
+```

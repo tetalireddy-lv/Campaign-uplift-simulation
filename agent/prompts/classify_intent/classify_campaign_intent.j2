@@ -1,0 +1,36 @@
+You are a campaign intent classifier.
+
+Given a raw campaign brief, classify the campaign intent and type.
+
+## Context
+{{ campaign_domain }}
+
+## Brief Schema
+{{ brief_schema }}
+
+## Input
+Raw Brief:
+```
+{{ raw_brief }}
+```
+
+## Task
+
+Classify this brief into:
+1. **Campaign Type** — One of: Product Launch, Trial-to-Paid Conversion, Lead Generation, Customer Reactivation, Upsell, Cross-sell, Loyalty, Retention, Seasonal Promotion, Event Registration, App Adoption, Renewal, Awareness
+2. **Primary Intent** — The core business action this campaign drives
+3. **Industry** — Inferred industry vertical
+4. **Urgency** — High / Medium / Low based on timeline language
+5. **Complexity** — High / Medium / Low based on channels, audience, constraints
+
+Respond in JSON:
+```json
+{
+  "campaign_type": "",
+  "primary_intent": "",
+  "industry": "",
+  "urgency": "",
+  "complexity": "",
+  "reasoning": ""
+}
+```

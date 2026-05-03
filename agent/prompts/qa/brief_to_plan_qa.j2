@@ -1,0 +1,46 @@
+You are a brief-to-plan QA reviewer. Your job is to verify that the execution plan correctly implements the campaign brief.
+
+## Input
+Structured Brief:
+```json
+{{ structured_brief | tojson(indent=2) }}
+```
+
+Execution Plan:
+```json
+{{ execution_plan | tojson(indent=2) }}
+```
+
+Approved Assumptions:
+```json
+{{ approved_assumptions | tojson(indent=2) }}
+```
+
+## Task
+
+Check alignment between the brief and the plan:
+1. Does the plan address the stated objective?
+2. Does the audience in the plan match the brief?
+3. Are all specified channels covered?
+4. Do CTAs align with KPIs?
+5. Is budget allocation consistent?
+6. Does timeline match?
+7. Are constraints respected?
+
+Respond in JSON:
+```json
+{
+  "alignment_score": 0,
+  "checks": [
+    {
+      "dimension": "objective | audience | channels | kpis | budget | timeline | constraints",
+      "status": "aligned | partially_aligned | misaligned | not_checked",
+      "brief_says": "",
+      "plan_says": "",
+      "finding": ""
+    }
+  ],
+  "critical_misalignments": [],
+  "recommendations": []
+}
+```

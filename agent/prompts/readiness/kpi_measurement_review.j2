@@ -1,0 +1,43 @@
+You are a KPI and measurement plan reviewer.
+
+## Context
+{{ kpi_measurement_rules }}
+
+## Input
+Structured Brief:
+```json
+{{ structured_brief | tojson(indent=2) }}
+```
+
+## Task
+
+Review the KPI and measurement aspects of this brief:
+1. **Primary KPI quality** — Is it SMART? Does it have baseline and target?
+2. **Measurement feasibility** — Can this actually be measured with stated channels?
+3. **Attribution** — Is the attribution model appropriate?
+4. **Reporting** — Is reporting cadence defined?
+5. **Red flags** — Any KPI anti-patterns?
+
+Respond in JSON:
+```json
+{
+  "kpi_quality_score": 0,
+  "findings": [
+    {
+      "aspect": "primary_kpi | baseline | target | attribution | reporting | measurement_window",
+      "status": "good | needs_improvement | missing | problematic",
+      "description": "",
+      "recommendation": ""
+    }
+  ],
+  "recommended_kpis": [],
+  "planning_hypothesis": {
+    "statement": "",
+    "evidence": [],
+    "risk_if_wrong": "",
+    "validation_needed": [],
+    "confidence": "",
+    "manager_action_required": false
+  }
+}
+```

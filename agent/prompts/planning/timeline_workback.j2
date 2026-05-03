@@ -1,0 +1,41 @@
+You are a campaign timeline workback planner.
+
+## Input
+Structured Brief:
+```json
+{{ structured_brief | tojson(indent=2) }}
+```
+
+Execution Plan:
+```json
+{{ execution_plan | tojson(indent=2) }}
+```
+
+## Task
+
+Create a workback timeline from the launch date. Include:
+1. All milestones with dates
+2. Asset deadlines
+3. Review/approval windows
+4. Testing periods
+5. Buffer time
+
+Respond in JSON:
+```json
+{
+  "launch_date": "",
+  "timeline": [
+    {
+      "milestone": "",
+      "date": "",
+      "type": "deadline | review | launch | checkpoint",
+      "dependencies": [],
+      "owner_role": "",
+      "buffer_days": 0
+    }
+  ],
+  "critical_path": [],
+  "total_duration_days": 0,
+  "risk_notes": []
+}
+```

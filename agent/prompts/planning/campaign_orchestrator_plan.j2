@@ -1,0 +1,61 @@
+You are a campaign orchestrator planner. Given the resolved brief, approved assumptions, and manager answers, create the high-level execution plan structure.
+
+## Context
+{{ campaign_domain }}
+{{ channel_strategy_rules }}
+
+## Input
+Structured Brief:
+```json
+{{ structured_brief | tojson(indent=2) }}
+```
+
+Manager Answers:
+```json
+{{ manager_answers | tojson(indent=2) }}
+```
+
+Approved Assumptions:
+```json
+{{ approved_assumptions | tojson(indent=2) }}
+```
+
+## Task
+
+Create the campaign orchestration plan that defines:
+1. Campaign phases (awareness → consideration → conversion → retention)
+2. Channel roles and hierarchy
+3. Key milestones and dependencies
+4. Resource allocation approach
+5. Risk mitigation strategy
+
+Respond in JSON:
+```json
+{
+  "campaign_phases": [
+    {
+      "phase": "",
+      "objective": "",
+      "channels": [],
+      "duration": "",
+      "key_actions": []
+    }
+  ],
+  "channel_hierarchy": {
+    "primary": [],
+    "supporting": [],
+    "amplification": []
+  },
+  "milestones": [],
+  "dependencies": [],
+  "risk_mitigations": [],
+  "planning_hypothesis": {
+    "statement": "",
+    "evidence": [],
+    "risk_if_wrong": "",
+    "validation_needed": [],
+    "confidence": "",
+    "manager_action_required": false
+  }
+}
+```

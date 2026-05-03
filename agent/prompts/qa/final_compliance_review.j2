@@ -1,0 +1,39 @@
+You are a final compliance reviewer. This is the last compliance check before the handoff packet is generated.
+
+## Context
+{{ compliance_brand_rules }}
+
+## Input
+Execution Plan:
+```json
+{{ execution_plan | tojson(indent=2) }}
+```
+
+Channel Strategy:
+```json
+{{ channel_strategy | tojson(indent=2) }}
+```
+
+Previous Compliance Report:
+```json
+{{ compliance_report | tojson(indent=2) }}
+```
+
+## Task
+
+Final compliance review:
+1. Have previously identified risks been addressed?
+2. Are there new risks introduced by the execution plan?
+3. Is the campaign ready from a compliance perspective?
+
+Respond in JSON:
+```json
+{
+  "compliance_status": "clear | issues_remaining | blocking_issues",
+  "resolved_issues": [],
+  "remaining_issues": [],
+  "new_issues": [],
+  "requires_legal_review": false,
+  "clearance_notes": ""
+}
+```

@@ -1,0 +1,168 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gold: #C9A84C;
+  --gold-light: #E8C45A;
+  --gold-pale: #F5D98A;
+  --surface: #0a0a0a;
+  --surface-1: #111111;
+  --surface-2: #1a1a1a;
+  --surface-3: #222222;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+body {
+  background-color: var(--surface);
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--surface-1); }
+::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+/* Glass card utility */
+.glass {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-gold {
+  background: rgba(201, 168, 76, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(201, 168, 76, 0.2);
+}
+
+/* Gold gradient text */
+.gold-text {
+  background: linear-gradient(135deg, #F5D98A 0%, #C9A84C 50%, #A8893D 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Shimmer loading effect */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.03) 0%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+/* Ambient glow */
+.glow-gold {
+  box-shadow: 0 0 40px rgba(201, 168, 76, 0.15), 0 0 80px rgba(201, 168, 76, 0.05);
+}
+
+.glow-gold-strong {
+  box-shadow: 0 0 20px rgba(201, 168, 76, 0.3), 0 0 60px rgba(201, 168, 76, 0.1);
+}
+
+/* Score ring */
+.score-ring {
+  stroke-dasharray: 251;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.5s ease;
+}
+
+/* Button base */
+.btn-primary {
+  @apply px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200;
+  background: linear-gradient(135deg, #C9A84C, #A8893D);
+  color: #0a0a0a;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #F5D98A, #C9A84C);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(201, 168, 76, 0.3);
+}
+
+.btn-ghost {
+  @apply px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200;
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  color: #C9A84C;
+}
+.btn-ghost:hover {
+  border-color: #C9A84C;
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.btn-danger {
+  @apply px-6 py-3 rounded-lg font-semibold text-sm transition-all duration-200;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+.btn-danger:hover {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* Step badge */
+.step-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.step-badge-active {
+  background: linear-gradient(135deg, #C9A84C, #A8893D);
+  color: #0a0a0a;
+  box-shadow: 0 0 16px rgba(201, 168, 76, 0.4);
+}
+
+.step-badge-done {
+  background: rgba(201, 168, 76, 0.15);
+  color: #C9A84C;
+  border: 1px solid rgba(201, 168, 76, 0.3);
+}
+
+.step-badge-pending {
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.3);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Severity badge */
+.badge-critical { @apply bg-red-950 text-red-400 border border-red-800; }
+.badge-high { @apply bg-orange-950 text-orange-400 border border-orange-800; }
+.badge-medium { @apply bg-yellow-950 text-yellow-400 border border-yellow-800; }
+.badge-low { @apply bg-emerald-950 text-emerald-400 border border-emerald-800; }
+
+/* Divider */
+.divider {
+  border: none;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent);
+}

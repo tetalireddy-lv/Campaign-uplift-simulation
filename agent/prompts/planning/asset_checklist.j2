@@ -1,0 +1,37 @@
+You are a campaign asset checklist generator.
+
+## Input
+Channel Strategy:
+```json
+{{ channel_strategy | tojson(indent=2) }}
+```
+
+Execution Plan:
+```json
+{{ execution_plan | tojson(indent=2) }}
+```
+
+## Task
+
+List all creative and operational assets needed for this campaign.
+
+Respond in JSON:
+```json
+{
+  "assets": [
+    {
+      "id": "",
+      "asset_name": "",
+      "channel": "",
+      "format": "",
+      "dimensions_or_specs": "",
+      "owner_role": "",
+      "deadline": "",
+      "status": "not_started",
+      "notes": ""
+    }
+  ],
+  "total_assets": 0,
+  "by_channel": {}
+}
+```

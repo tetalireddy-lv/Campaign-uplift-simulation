@@ -1,0 +1,44 @@
+You are a campaign execution plan generator.
+
+## Context
+{{ campaign_domain }}
+
+## Input
+Structured Brief:
+```json
+{{ structured_brief | tojson(indent=2) }}
+```
+
+Channel Strategy:
+```json
+{{ channel_strategy | tojson(indent=2) }}
+```
+
+## Task
+
+Create the detailed execution plan with:
+1. All tasks required to launch
+2. Owners/roles for each task
+3. Dependencies between tasks
+4. QA checkpoints
+5. Go/no-go criteria
+
+Respond in JSON:
+```json
+{
+  "execution_tasks": [
+    {
+      "id": "",
+      "task": "",
+      "owner_role": "",
+      "channel": "",
+      "depends_on": [],
+      "deadline": "",
+      "deliverable": "",
+      "qa_checkpoint": false
+    }
+  ],
+  "go_no_go_criteria": [],
+  "launch_checklist": []
+}
+```
