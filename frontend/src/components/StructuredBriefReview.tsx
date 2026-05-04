@@ -1,11 +1,13 @@
-import { motion } from 'framer-motion';
-import { Target, Users, Megaphone, DollarSign, Calendar, BarChart2, AlertOctagon } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Target, Users, Megaphone, DollarSign, Calendar, BarChart2, AlertOctagon, ChevronDown, FileText } from 'lucide-react';
 import type { StartResponse } from '../types/campaign';
 import { PlanningHypothesisCard } from './PlanningHypothesisCard';
 import { ManagerActionPanel, approveAction, editAction, clarifyAction } from './ManagerActionPanel';
 
 interface Props {
   data: StartResponse;
+  rawBrief?: string;
   onApprove: () => void;
   loading: boolean;
 }
@@ -24,10 +26,11 @@ function Field({ icon, label, value }: { icon: React.ReactNode; label: string; v
   );
 }
 
-export function StructuredBriefReview({ data, onApprove, loading }: Props) {
+export function StructuredBriefReview({ data, rawBrief, onApprove, loading }: Props) {
   const brief = data.structured_brief;
   const intent = data.campaign_intent;
   const hypo = brief.planning_hypothesis;
+  const [briefExpanded, setBriefExpanded] = useState(false);
 
   const isMock = brief._source === 'mock';
 
@@ -47,6 +50,47 @@ export function StructuredBriefReview({ data, onApprove, loading }: Props) {
         </h2>
         <p className="text-white/40 text-sm mt-1">Brief successfully parsed — review and approve to continue</p>
       </motion.div>
+
+      {/* Raw brief submitted by user */}
+      {rawBrief && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="glass rounded-2xl overflow-hidden"
+        >
+          <button
+            className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/5 transition-colors"
+            onClick={() => setBriefExpanded(prev => !prev)}
+          >
+            <div className="flex items-center gap-2">
+              <FileText size={14} className="text-gold-400" />
+              <span className="text-sm font-semibold text-white/70">Your Submitted Brief</span>
+            </div>
+            <ChevronDown
+              size={15}
+              className="text-white/30 transition-transform duration-200"
+              style={{ transform: briefExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+            />
+          </button>
+          <AnimatePresence initial={false}>
+            {briefExpanded && (
+              <motion.div
+                key="raw-brief"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+                className="overflow-hidden"
+              >
+                <pre className="px-5 pb-5 text-xs text-white/50 leading-relaxed whitespace-pre-wrap font-mono border-t border-white/5">
+                  {rawBrief}
+                </pre>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      )}
 
       {/* Intent badge row */}
       {intent && (

@@ -50,6 +50,7 @@ export function CampaignWorkflowPage() {
     currentStep: 'brief',
     loading: false,
     error: null,
+    rawBrief: null,
     startData: null,
     readinessData: null,
     ambiguityData: null,
@@ -76,7 +77,7 @@ export function CampaignWorkflowPage() {
     setError(null);
     try {
       const data: StartResponse = await campaignApi.startWorkflow(rawBrief);
-      setState(s => ({ ...s, sessionId: data.session_id, startData: data, loading: false }));
+      setState(s => ({ ...s, sessionId: data.session_id, rawBrief, startData: data, loading: false }));
     } catch (e: unknown) {
       setLoading(false);
       setError(`Failed to parse brief: ${(e as Error).message}`);
@@ -178,27 +179,30 @@ export function CampaignWorkflowPage() {
   };
 
   // ── Render current step ───────────────────────────────────────────────────
+  // IMPORTANT: always check for existing data BEFORE checking loading.
+  // The `loading` flag is global — if any step's API call is in flight,
+  // navigating back to a completed step must still show its cached data.
   const renderContent = () => {
     const { currentStep, loading } = state;
 
     // Step 1
     if (currentStep === 'brief') {
-      if (loading) return <LoadingState message="Parsing campaign brief…" subMessage="Extracting structured fields and classifying intent" />;
       if (state.startData) {
         return (
           <StructuredBriefReview
             data={state.startData}
+            rawBrief={state.rawBrief ?? undefined}
             onApprove={handleValidateReadiness}
             loading={loading}
           />
         );
       }
+      if (loading) return <LoadingState message="Parsing campaign brief…" subMessage="Extracting structured fields and classifying intent" />;
       return <BriefInput onSubmit={handleStartWorkflow} loading={loading} />;
     }
 
     // Step 2
     if (currentStep === 'readiness') {
-      if (loading) return <LoadingState message="Validating readiness…" subMessage="Detecting gaps, compliance risks, and KPI measurability" />;
       if (state.readinessData) {
         return (
           <ReadinessReview
@@ -208,12 +212,12 @@ export function CampaignWorkflowPage() {
           />
         );
       }
+      if (loading) return <LoadingState message="Validating readiness…" subMessage="Detecting gaps, compliance risks, and KPI measurability" />;
       return <LoadingState message="Loading readiness data…" />;
     }
 
     // Step 3
     if (currentStep === 'ambiguity') {
-      if (loading && !state.ambiguityData) return <LoadingState message="Generating clarifications…" subMessage="Identifying unanswered questions and forming assumptions" />;
       if (state.ambiguityData) {
         return (
           <AmbiguityResolution
@@ -223,12 +227,12 @@ export function CampaignWorkflowPage() {
           />
         );
       }
+      if (loading) return <LoadingState message="Generating clarifications…" subMessage="Identifying unanswered questions and forming assumptions" />;
       return <LoadingState message="Loading ambiguity data…" />;
     }
 
     // Step 4
     if (currentStep === 'plan') {
-      if (loading && !state.planData) return <LoadingState message="Generating execution plan…" subMessage="Building channel strategy, measurement plan, timeline, asset checklist, and uplift simulation" />;
       if (state.planData) {
         return (
           <PlanSimulation
@@ -238,7 +242,7 @@ export function CampaignWorkflowPage() {
           />
         );
       }
-      // Auto-trigger plan generation when reaching this step
+      if (loading) return <LoadingState message="Generating execution plan…" subMessage="Building channel strategy, measurement plan, timeline, asset checklist, and uplift simulation" />;
       return (
         <div className="flex flex-col items-center gap-6 py-16">
           <p className="text-white/60">Ready to generate the execution plan.</p>
@@ -256,8 +260,6 @@ export function CampaignWorkflowPage() {
 
     // Step 5
     if (currentStep === 'handoff') {
-      if (loading && !state.qaData) return <LoadingState message="Running QA checks…" subMessage="Brief-to-plan alignment, consistency, and compliance review" />;
-
       if (state.qaData) {
         if (subView === 'handoff') {
           return <HandoffPacket data={state.qaData} onViewReport={handleViewReport} />;
@@ -270,6 +272,7 @@ export function CampaignWorkflowPage() {
           />
         );
       }
+      if (loading) return <LoadingState message="Running QA checks…" subMessage="Brief-to-plan alignment, consistency, and compliance review" />;
       return <LoadingState message="Loading QA data…" />;
     }
 
@@ -314,7 +317,7 @@ export function CampaignWorkflowPage() {
               (step === 'report' && completedSteps.has('handoff'));
             if (accessible) {
               setState(s => ({ ...s, currentStep: step }));
-              if (step === 'handoff') setSubView('handoff');
+              if (step === 'handoff') setSubView('review');
             }
           }}
         />

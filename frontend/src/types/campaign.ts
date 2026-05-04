@@ -259,6 +259,7 @@ export interface WorkflowState {
   loading: boolean;
   error: string | null;
   // Data
+  rawBrief: string | null;
   startData: StartResponse | null;
   readinessData: ReadinessResponse | null;
   ambiguityData: AmbiguityResponse | null;
