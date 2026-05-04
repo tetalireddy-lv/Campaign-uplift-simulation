@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Brain, ShieldCheck, HelpCircle, BarChart3, PackageCheck, Zap, Database } from 'lucide-react';
+import { Check, Brain, ShieldCheck, HelpCircle, BarChart3, PackageCheck, Zap, Database, FileText } from 'lucide-react';
 import type { WorkflowStep } from '../types/campaign';
 import { campaignApi } from '../api/campaignApi';
 
@@ -10,6 +10,7 @@ const STEPS: { id: WorkflowStep; label: string; sub: string; icon: React.ReactNo
   { id: 'ambiguity', label: 'Resolve Ambiguity', sub: 'Clarification questions & assumptions', icon: <HelpCircle size={16} /> },
   { id: 'plan', label: 'Plan + Simulate', sub: 'Execution plan & uplift scenarios', icon: <BarChart3 size={16} /> },
   { id: 'handoff', label: 'QA + Handoff', sub: 'Final review & launch packet', icon: <PackageCheck size={16} /> },
+  { id: 'report', label: 'Final Report', sub: 'Structured campaign readiness report', icon: <FileText size={16} /> },
 ];
 
 interface Props {
@@ -19,8 +20,8 @@ interface Props {
 }
 
 function getStatus(step: WorkflowStep, current: WorkflowStep, completed: Set<WorkflowStep>) {
-  if (completed.has(step)) return 'done';
   if (step === current) return 'active';
+  if (completed.has(step)) return 'done';
   return 'pending';
 }
 
@@ -137,14 +138,14 @@ export function WorkflowSidebar({ currentStep, completedSteps, onStepClick }: Pr
       <div className="mt-6 px-1">
         <div className="flex justify-between text-xs text-white/30 mb-2">
           <span>Progress</span>
-          <span>{completedSteps.size}/5</span>
+          <span>{completedSteps.size}/6</span>
         </div>
         <div className="h-1 bg-white/5 rounded-full overflow-hidden">
           <motion.div
             className="h-full rounded-full"
             style={{ background: 'linear-gradient(90deg, #C9A84C, #F5D98A)' }}
             initial={{ width: 0 }}
-            animate={{ width: `${(completedSteps.size / 5) * 100}%` }}
+            animate={{ width: `${(completedSteps.size / 6) * 100}%` }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
           />
         </div>

@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
 
-from models.schemas import (
+from backend.models.schemas import (
     ApproveAssumptionsRequest,
     ApproveResponse,
     AmbiguityResponse,
@@ -17,8 +17,8 @@ from models.schemas import (
     StartRequest,
     StartResponse,
 )
-from services import session as session_store
-from services import workflow_service as wf
+from backend.services import session as session_store
+from backend.services import workflow_service as wf
 
 router = APIRouter()
 
@@ -26,7 +26,7 @@ router = APIRouter()
 # ── GET /api/config/status ───────────────────────────────────────────────────
 
 @router.get("/config/status")
-def config_status():
+async def config_status():
     """Returns current LLM configuration so the frontend can show live vs mock mode."""
     key = os.getenv("AZURE_OPENAI_API_KEY", "")
     endpoint = os.getenv("AZURE_OPENAI_ENDPOINT", "")
@@ -45,7 +45,7 @@ def config_status():
 # ── GET /api/workflow/{session_id} ──────────────────────────────────────────
 
 @router.get("/workflow/{session_id}", response_model=SessionResponse)
-def get_session(session_id: str):
+async def get_session(session_id: str):
     s = session_store.get_session(session_id)
     if not s:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -55,14 +55,15 @@ def get_session(session_id: str):
 # ── POST /api/workflow/start ─────────────────────────────────────────────────
 
 @router.post("/workflow/start", response_model=StartResponse)
-def start_workflow(body: StartRequest):
+async def start_workflow(body: StartRequest):
     if not body.raw_brief.strip():
         raise HTTPException(status_code=422, detail="raw_brief cannot be empty")
 
     session = session_store.create_session(body.raw_brief)
     session_id = session["session_id"]
 
-    result = wf.run_parse_brief(body.raw_brief)
+    # run_parse_brief runs brief_parser + classify_intent concurrently
+    result = await wf.run_parse_brief(body.raw_brief)
 
     session_store.update_session(session_id, {
         "structured_brief": result["structured_brief"],
@@ -82,14 +83,15 @@ def start_workflow(body: StartRequest):
 # ── POST /api/workflow/{session_id}/validate-readiness ───────────────────────
 
 @router.post("/workflow/{session_id}/validate-readiness", response_model=ReadinessResponse)
-def validate_readiness(session_id: str):
+async def validate_readiness(session_id: str):
     s = session_store.get_session(session_id)
     if not s:
         raise HTTPException(status_code=404, detail="Session not found")
     if not s.get("structured_brief"):
         raise HTTPException(status_code=400, detail="Brief not parsed yet — call /start first")
 
-    result = wf.run_validate_readiness(s["structured_brief"])
+    # gap_detector, compliance_risk_review, kpi_measurement_review run concurrently
+    result = await wf.run_validate_readiness(s["structured_brief"])
 
     session_store.update_session(session_id, {
         **result,
@@ -107,14 +109,15 @@ def validate_readiness(session_id: str):
 # ── POST /api/workflow/{session_id}/resolve-ambiguity ────────────────────────
 
 @router.post("/workflow/{session_id}/resolve-ambiguity", response_model=AmbiguityResponse)
-def resolve_ambiguity(session_id: str):
+async def resolve_ambiguity(session_id: str):
     s = session_store.get_session(session_id)
     if not s:
         raise HTTPException(status_code=404, detail="Session not found")
     if not s.get("gap_report"):
         raise HTTPException(status_code=400, detail="Readiness not validated yet")
 
-    result = wf.run_resolve_ambiguity(
+    # Sequential: assumption_register depends on clarification_questions output
+    result = await wf.run_resolve_ambiguity(
         s["structured_brief"],
         s["gap_report"],
         s["compliance_report"],
@@ -137,7 +140,7 @@ def resolve_ambiguity(session_id: str):
 # ── POST /api/workflow/{session_id}/approve-assumptions ─────────────────────
 
 @router.post("/workflow/{session_id}/approve-assumptions", response_model=ApproveResponse)
-def approve_assumptions(session_id: str, body: ApproveAssumptionsRequest):
+async def approve_assumptions(session_id: str, body: ApproveAssumptionsRequest):
     s = session_store.get_session(session_id)
     if not s:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -159,14 +162,16 @@ def approve_assumptions(session_id: str, body: ApproveAssumptionsRequest):
 # ── POST /api/workflow/{session_id}/plan-and-simulate ───────────────────────
 
 @router.post("/workflow/{session_id}/plan-and-simulate", response_model=PlanResponse)
-def plan_and_simulate(session_id: str):
+async def plan_and_simulate(session_id: str):
     s = session_store.get_session(session_id)
     if not s:
         raise HTTPException(status_code=404, detail="Session not found")
     if not s.get("structured_brief"):
         raise HTTPException(status_code=400, detail="Session not ready for planning")
 
-    result = wf.run_plan_and_simulate(
+    # orch → channel → plan (sequential), then asset/timeline/measurement (parallel),
+    # then simulate_uplift (sequential after measurement_plan)
+    result = await wf.run_plan_and_simulate(
         s["structured_brief"],
         s.get("gap_report", {}),
         s.get("approved_assumptions", []),
@@ -189,14 +194,16 @@ def plan_and_simulate(session_id: str):
 # ── POST /api/workflow/{session_id}/qa-and-handoff ──────────────────────────
 
 @router.post("/workflow/{session_id}/qa-and-handoff", response_model=QAHandoffResponse)
-def qa_and_handoff(session_id: str):
+async def qa_and_handoff(session_id: str):
     s = session_store.get_session(session_id)
     if not s:
         raise HTTPException(status_code=404, detail="Session not found")
     if not s.get("execution_plan"):
         raise HTTPException(status_code=400, detail="Plan not generated yet")
 
-    result = wf.run_qa_and_handoff(
+    # brief_to_plan_qa, multi_channel_consistency, final_compliance_review run concurrently,
+    # then generate_handoff_packet runs after all three complete
+    result = await wf.run_qa_and_handoff(
         s["structured_brief"],
         s["execution_plan"],
         s["channel_strategy"],

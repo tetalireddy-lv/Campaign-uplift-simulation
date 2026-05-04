@@ -22,7 +22,7 @@ import type {
   QAHandoffResponse,
 } from '../types/campaign';
 
-const STEP_ORDER: WorkflowStep[] = ['brief', 'readiness', 'ambiguity', 'plan', 'handoff'];
+const STEP_ORDER: WorkflowStep[] = ['brief', 'readiness', 'ambiguity', 'plan', 'handoff', 'report'];
 
 const PAGE_VARIANTS = {
   initial: { opacity: 0, x: 24 },
@@ -60,7 +60,7 @@ export function CampaignWorkflowPage() {
   });
 
   const [completedSteps, setCompletedSteps] = useState<Set<WorkflowStep>>(new Set());
-  const [subView, setSubView] = useState<'review' | 'handoff' | 'report'>('review');
+  const [subView, setSubView] = useState<'review' | 'handoff'>('review');
 
   const setLoading = (loading: boolean) => setState(s => ({ ...s, loading }));
   const setError = (error: string | null) => setState(s => ({ ...s, error }));
@@ -172,6 +172,11 @@ export function CampaignWorkflowPage() {
     }
   };
 
+  const handleViewReport = () => {
+    setCompletedSteps(prev => new Set([...prev, 'handoff', 'report']));
+    setState(s => ({ ...s, currentStep: 'report' }));
+  };
+
   // ── Render current step ───────────────────────────────────────────────────
   const renderContent = () => {
     const { currentStep, loading } = state;
@@ -254,21 +259,8 @@ export function CampaignWorkflowPage() {
       if (loading && !state.qaData) return <LoadingState message="Running QA checks…" subMessage="Brief-to-plan alignment, consistency, and compliance review" />;
 
       if (state.qaData) {
-        if (subView === 'report' && state.startData && state.readinessData && state.planData) {
-          return (
-            <CampaignReport
-              startData={state.startData}
-              readinessData={state.readinessData}
-              ambiguityData={state.ambiguityData}
-              planData={state.planData}
-              qaData={state.qaData}
-              approvedAssumptions={state.approvedAssumptions}
-              onBack={() => setSubView('handoff')}
-            />
-          );
-        }
         if (subView === 'handoff') {
-          return <HandoffPacket data={state.qaData} onViewReport={() => setSubView('report')} />;
+          return <HandoffPacket data={state.qaData} onViewReport={handleViewReport} />;
         }
         return (
           <QAReview
@@ -279,6 +271,24 @@ export function CampaignWorkflowPage() {
         );
       }
       return <LoadingState message="Loading QA data…" />;
+    }
+
+    // Step 6 — Final Report
+    if (currentStep === 'report') {
+      if (state.startData && state.readinessData && state.planData && state.qaData) {
+        return (
+          <CampaignReport
+            startData={state.startData}
+            readinessData={state.readinessData}
+            ambiguityData={state.ambiguityData}
+            planData={state.planData}
+            qaData={state.qaData}
+            approvedAssumptions={state.approvedAssumptions}
+            onBack={() => setState(s => ({ ...s, currentStep: 'handoff' }))}
+          />
+        );
+      }
+      return <LoadingState message="Preparing final report…" />;
     }
 
     return null;
@@ -300,9 +310,11 @@ export function CampaignWorkflowPage() {
           currentStep={state.currentStep}
           completedSteps={completedSteps}
           onStepClick={(step) => {
-            if (completedSteps.has(step) || step === state.currentStep) {
+            const accessible = completedSteps.has(step) || step === state.currentStep ||
+              (step === 'report' && completedSteps.has('handoff'));
+            if (accessible) {
               setState(s => ({ ...s, currentStep: step }));
-              setSubView(step === 'handoff' ? 'handoff' : 'review');
+              if (step === 'handoff') setSubView('handoff');
             }
           }}
         />

@@ -1,29 +1,7 @@
-"""KPI & Measurement Plan Tool — reviews and generates measurement plans."""
+"""KPI & Measurement Plan Tool — deterministic measurement plan generator."""
 from __future__ import annotations
 
-import sys
 from typing import Any
-
-sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent.parent))
-
-
-def review_kpi_plan(structured_brief: dict) -> dict:
-    """Review the KPI and measurement aspects of the brief.
-
-    Args:
-        structured_brief: Parsed campaign brief
-
-    Returns:
-        KPI review with quality score and recommendations
-    """
-    from workflow.llm_utils import call_llm_json
-    from workflow.prompt_renderer import render_prompt
-
-    prompt = render_prompt(
-        "readiness/kpi_measurement_review.j2",
-        structured_brief=structured_brief,
-    )
-    return call_llm_json(prompt)
 
 
 def _stringify_mapping(value: dict[str, Any]) -> str:
@@ -38,10 +16,7 @@ def _normalize_channels(structured_brief: dict, channel_strategy: dict | None) -
         return [part.strip() for part in channels.split(",") if part.strip()]
     strategy_channels = channel_strategy.get("channels") if channel_strategy else None
     if isinstance(strategy_channels, list):
-        names = []
-        for item in strategy_channels:
-            if isinstance(item, dict) and item.get("channel"):
-                names.append(str(item["channel"]))
+        names = [str(item["channel"]) for item in strategy_channels if isinstance(item, dict) and item.get("channel")]
         if names:
             return names
     return ["Email", "Web Analytics"]
@@ -58,7 +33,7 @@ def _extract_primary_kpi(structured_brief: dict) -> tuple[str, str | None, str |
             if metric:
                 return str(metric), str(baseline) if baseline else None, str(target) if target else None
         if isinstance(primary, str) and primary:
-            return str(primary), str(success_metrics.get("baseline")) if success_metrics.get("baseline") else None, str(success_metrics.get("target")) if success_metrics.get("target") else None
+            return str(primary), str(success_metrics.get("baseline") or ""), str(success_metrics.get("target") or "") or None
     if isinstance(success_metrics, str) and success_metrics:
         return success_metrics, None, None
     return "Primary KPI", None, None
@@ -68,21 +43,19 @@ def _timeline_window(structured_brief: dict) -> str:
     timeline = structured_brief.get("timeline")
     if isinstance(timeline, dict):
         return _stringify_mapping(timeline)
-    if timeline:
-        return str(timeline)
-    return "Campaign flight window"
+    return str(timeline) if timeline else "Campaign flight window"
 
 
 def _data_sources_for_channels(channels: list[str]) -> list[str]:
-    lowered = [channel.lower() for channel in channels]
+    lowered = [c.lower() for c in channels]
     sources = {"CRM / CDP", "Campaign reporting dashboard"}
-    if any(term in channel for channel in lowered for term in ["email", "in-app"]):
+    if any(t in c for c in lowered for t in ["email", "in-app"]):
         sources.add("Marketing automation platform")
-    if any(term in channel for channel in lowered for term in ["search", "social", "linkedin", "display", "programmatic"]):
+    if any(t in c for c in lowered for t in ["search", "social", "linkedin", "display", "programmatic"]):
         sources.add("Ad platform analytics")
-    if any(term in channel for channel in lowered for term in ["direct mail", "event", "webinar"]):
+    if any(t in c for c in lowered for t in ["direct mail", "event", "webinar"]):
         sources.add("Offline response and registration files")
-    if any(term in channel for channel in lowered for term in ["web", "search", "social", "display"]):
+    if any(t in c for c in lowered for t in ["web", "search", "social", "display"]):
         sources.add("Web analytics")
     return sorted(sources)
 
@@ -92,27 +65,23 @@ def generate_measurement_plan(
     execution_plan: dict,
     channel_strategy: dict | None = None,
 ) -> dict:
-    """Build a deterministic measurement plan for the Plan + Simulate step.
-
-    This keeps Step 4 numeric and reproducible even when the broader workflow is
-    using prompt fallbacks.
-    """
+    """Build a deterministic measurement plan for the Plan + Simulate step."""
     channels = _normalize_channels(structured_brief, channel_strategy)
     primary_kpi, baseline, target = _extract_primary_kpi(structured_brief)
-    cadence = "Weekly"
-    if any(term in _timeline_window(structured_brief).lower() for term in ["90 days", "quarter", "13"]):
-        cadence = "Weekly with mid-flight checkpoint"
-
-    control_strategy = "Matched audience holdout"
-    if any(term in ", ".join(channels).lower() for term in ["direct mail", "event", "webinar"]):
-        control_strategy = "Geo holdout or staggered launch"
+    timeline = _timeline_window(structured_brief)
+    cadence = "Weekly with mid-flight checkpoint" if any(t in timeline.lower() for t in ["90 days", "quarter", "13"]) else "Weekly"
+    control_strategy = (
+        "Geo holdout or staggered launch"
+        if any(t in ", ".join(channels).lower() for t in ["direct mail", "event", "webinar"])
+        else "Matched audience holdout"
+    )
 
     return {
         "primary_kpi": primary_kpi,
         "baseline": baseline,
         "target": target,
         "measurement_framework": "Track the primary KPI at channel and total-campaign level, then compare against a holdout or staggered control where possible.",
-        "measurement_window": _timeline_window(structured_brief),
+        "measurement_window": timeline,
         "reporting_cadence": cadence,
         "data_sources": _data_sources_for_channels(channels),
         "control_strategy": control_strategy,

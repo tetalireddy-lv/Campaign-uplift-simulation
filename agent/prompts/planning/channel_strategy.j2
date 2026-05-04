@@ -1,4 +1,4 @@
-You are a channel strategy specialist. Create the detailed channel strategy for this campaign.
+You are a channel strategy specialist. Given the campaign brief, approved assumptions, and manager answers, create the complete channel strategy.
 
 ## Context
 {{ channel_strategy_rules }}
@@ -9,15 +9,20 @@ Structured Brief:
 {{ structured_brief | tojson(indent=2) }}
 ```
 
-Orchestration Plan:
+Manager Answers:
 ```json
-{{ orchestration_plan | tojson(indent=2) }}
+{{ manager_answers | tojson(indent=2) }}
+```
+
+Approved Assumptions:
+```json
+{{ approved_assumptions | tojson(indent=2) }}
 ```
 
 ## Task
 
 For each channel, define:
-1. Role in the campaign
+1. Role in the campaign (primary, supporting, or amplification)
 2. Target audience segment
 3. Message adaptation
 4. CTA

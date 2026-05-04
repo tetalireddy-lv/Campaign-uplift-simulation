@@ -5,6 +5,7 @@ import {
   Target, Users, Megaphone, DollarSign, Calendar, BarChart2,
   AlertOctagon, ShieldCheck, TrendingUp, AlertTriangle,
   CheckCircle2, ArrowRight, PackageCheck, Layers, Clock,
+  ClipboardList, ListOrdered, LineChart,
 } from 'lucide-react';
 import type {
   StartResponse, ReadinessResponse, AmbiguityResponse,
@@ -115,9 +116,13 @@ export function CampaignReport({
 
   const brief = startData.structured_brief;
   const { gap_report, compliance_report, kpi_report, readiness_score } = readinessData;
-  const { execution_plan, channel_strategy, simulation_report, timeline_plan, asset_checklist } = planData;
+  const { execution_plan, channel_strategy, simulation_report, timeline_plan, asset_checklist, measurement_plan } = planData;
   const { qa_report, consistency_report, final_compliance_report, handoff_packet } = qaData;
   const campaignName = String(brief.campaign_name ?? handoff_packet.campaign_name ?? 'Campaign');
+
+  // Auto-incrementing section counter — reset each render
+  let _sec = 0;
+  const S = () => String(++_sec).padStart(2, '0');
 
   const handleDownloadJSON = () => {
     const report = {
@@ -219,8 +224,8 @@ export function CampaignReport({
         </p>
       </motion.div>
 
-      {/* ── 01. Executive Summary ── */}
-      <Section num="01" title="Executive Summary">
+      {/* ── Executive Summary ── */}
+      <Section num={S()} title="Executive Summary">
         <div className="glass rounded-xl p-5">
           <p className="text-sm text-white/70 leading-relaxed">
             {String(handoff_packet.executive_summary ?? execution_plan.campaign_overview ?? '—')}
@@ -240,8 +245,8 @@ export function CampaignReport({
         </div>
       </Section>
 
-      {/* ── 02. Campaign Brief ── */}
-      <Section num="02" title="Campaign Brief">
+      {/* ── Campaign Brief ── */}
+      <Section num={S()} title="Campaign Brief">
         <div className="glass rounded-xl divide-y divide-white/5">
           <Row icon={<Target size={14} />} label="Business Objective" value={String(brief.business_objective ?? '—')} />
           <Row icon={<Users size={14} />} label="Target Audience" value={
@@ -277,8 +282,8 @@ export function CampaignReport({
         </div>
       </Section>
 
-      {/* ── 03. Readiness Assessment ── */}
-      <Section num="03" title="Readiness Assessment">
+      {/* ── Readiness Assessment ── */}
+      <Section num={S()} title="Readiness Assessment">
         {/* Overview */}
         <div className="glass rounded-xl p-4 mb-3">
           <p className="text-sm text-white/60 leading-relaxed">{String(gap_report.overall_assessment ?? '—')}</p>
@@ -390,9 +395,9 @@ export function CampaignReport({
         )}
       </Section>
 
-      {/* ── 04. Approved Assumptions ── */}
+      {/* ── Approved Assumptions ── */}
       {approvedAssumptions.length > 0 && (
-        <Section num="04" title="Approved Assumptions">
+        <Section num={S()} title="Approved Assumptions">
           <div className="flex flex-col gap-2">
             {approvedAssumptions.map((a, i) => (
               <div key={i} className="glass rounded-xl p-4 flex gap-3">
@@ -412,8 +417,8 @@ export function CampaignReport({
         </Section>
       )}
 
-      {/* ── 05. Channel Strategy & Execution ── */}
-      <Section num={approvedAssumptions.length > 0 ? '05' : '04'} title="Channel Strategy & Execution Plan">
+      {/* ── Channel Strategy & Execution ── */}
+      <Section num={S()} title="Channel Strategy & Execution Plan">
         {/* Strategy summary */}
         <div className="glass rounded-xl p-4 mb-3">
           <p className="text-sm text-white/70 leading-relaxed">{String(execution_plan.strategy_summary ?? execution_plan.campaign_overview ?? '—')}</p>
@@ -484,9 +489,161 @@ export function CampaignReport({
         )}
       </Section>
 
-      {/* ── 06. Market Uplift Simulation ── */}
+      {/* ── Asset Checklist ── */}
+      {Array.isArray((asset_checklist as any)?.assets) && (asset_checklist as any).assets.length > 0 && (
+        <Section num={S()} title="Asset Checklist">
+          <div className="rounded-xl overflow-hidden border border-white/6 mb-3">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
+                  {['Asset', 'Channel', 'Format', 'Owner', 'Deadline', 'Status'].map(h => (
+                    <th key={h} className="text-left px-4 py-2 text-xs text-white/30 font-semibold uppercase tracking-wide">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {((asset_checklist as any).assets as any[]).map((a: any, i: number) => {
+                  const statusColors: Record<string, string> = {
+                    not_started: 'bg-white/5 text-white/40 border-white/10',
+                    in_progress: 'bg-yellow-950 text-yellow-400 border-yellow-800',
+                    done: 'bg-emerald-950 text-emerald-400 border-emerald-800',
+                    complete: 'bg-emerald-950 text-emerald-400 border-emerald-800',
+                    blocked: 'bg-red-950 text-red-400 border-red-800',
+                  };
+                  const sc = statusColors[String(a.status ?? 'not_started').toLowerCase()] ?? statusColors.not_started;
+                  return (
+                    <tr key={i} className="border-t border-white/5">
+                      <td className="px-4 py-3 text-white/80 font-medium text-xs">{a.asset_name}</td>
+                      <td className="px-4 py-3 text-white/50 text-xs">{a.channel ?? '—'}</td>
+                      <td className="px-4 py-3 text-white/40 text-xs">{a.format ?? '—'}</td>
+                      <td className="px-4 py-3 text-white/50 text-xs">{a.owner_role ?? '—'}</td>
+                      <td className="px-4 py-3 text-white/40 text-xs">{a.deadline ?? '—'}</td>
+                      <td className="px-4 py-3">
+                        <span className={`text-xs px-2 py-0.5 rounded-full border ${sc}`}>
+                          {String(a.status ?? 'not started').replace(/_/g, ' ')}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {(asset_checklist as any).total_assets != null && (
+            <p className="text-xs text-white/30">Total assets: {String((asset_checklist as any).total_assets)}</p>
+          )}
+        </Section>
+      )}
+
+      {/* ── Timeline Workback ── */}
+      {Array.isArray((timeline_plan as any)?.timeline) && (timeline_plan as any).timeline.length > 0 && (
+        <Section num={S()} title="Timeline Workback">
+          <div className="flex flex-col gap-2 mb-3">
+            {((timeline_plan as any).timeline as any[]).map((m: any, i: number) => {
+              const typeColors: Record<string, string> = {
+                launch: '#C9A84C',
+                deadline: '#ef4444',
+                review: '#60a5fa',
+                checkpoint: '#a78bfa',
+              };
+              const dot = typeColors[String(m.type ?? 'checkpoint').toLowerCase()] ?? '#60a5fa';
+              return (
+                <div key={i} className="glass rounded-xl px-4 py-3 flex items-center gap-4">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: dot }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white/80">{m.milestone}</p>
+                    {Array.isArray(m.dependencies) && m.dependencies.length > 0 && (
+                      <p className="text-xs text-white/30 mt-0.5">Depends on: {(m.dependencies as string[]).join(', ')}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 shrink-0 text-xs text-white/40">
+                    {m.date && <span className="flex items-center gap-1"><Calendar size={11} /> {m.date}</span>}
+                    {m.owner_role && <span>{m.owner_role}</span>}
+                    <span className="px-2 py-0.5 rounded-full border text-xs" style={{ borderColor: `${dot}40`, color: dot, background: `${dot}10` }}>
+                      {String(m.type ?? 'checkpoint')}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          {(timeline_plan as any).critical_path?.length > 0 && (
+            <div className="glass rounded-xl p-4">
+              <p className="text-xs text-white/30 uppercase tracking-widest font-semibold mb-2">Critical Path</p>
+              <div className="flex flex-wrap gap-2">
+                {((timeline_plan as any).critical_path as string[]).map((item: string, i: number) => (
+                  <span key={i} className="text-xs px-2.5 py-1 rounded-full"
+                    style={{ background: 'rgba(201,168,76,0.1)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.2)' }}>
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </Section>
+      )}
+
+      {/* ── Measurement Plan ── */}
+      {measurement_plan && Object.keys(measurement_plan).some(k => k !== '_source' && (measurement_plan as any)[k]) && (
+        <Section num={S()} title="Measurement Plan">
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            {measurement_plan.primary_kpi && (
+              <div className="glass rounded-xl p-4">
+                <p className="text-xs text-white/30 mb-1">Primary KPI</p>
+                <p className="text-sm font-semibold text-white">{String(measurement_plan.primary_kpi)}</p>
+                <div className="flex gap-4 mt-2 text-xs text-white/40">
+                  {measurement_plan.baseline != null && <span>Baseline: <span className="text-white/60">{String(measurement_plan.baseline)}</span></span>}
+                  {measurement_plan.target != null && <span>Target: <span className="text-gold-400 font-semibold">{String(measurement_plan.target)}</span></span>}
+                </div>
+              </div>
+            )}
+            {measurement_plan.measurement_framework && (
+              <div className="glass rounded-xl p-4">
+                <p className="text-xs text-white/30 mb-1">Measurement Framework</p>
+                <p className="text-sm text-white/70 leading-relaxed">{String(measurement_plan.measurement_framework)}</p>
+              </div>
+            )}
+          </div>
+          <div className="glass rounded-xl divide-y divide-white/5">
+            {measurement_plan.measurement_window && (
+              <Row icon={<Calendar size={14} />} label="Measurement Window" value={String(measurement_plan.measurement_window)} />
+            )}
+            {measurement_plan.reporting_cadence && (
+              <Row icon={<Clock size={14} />} label="Reporting Cadence" value={String(measurement_plan.reporting_cadence)} />
+            )}
+            {measurement_plan.control_strategy && (
+              <Row icon={<ShieldCheck size={14} />} label="Control Strategy" value={String(measurement_plan.control_strategy)} />
+            )}
+            {Array.isArray(measurement_plan.data_sources) && measurement_plan.data_sources.length > 0 && (
+              <Row icon={<Layers size={14} />} label="Data Sources" value={
+                <div className="flex flex-wrap gap-1.5 mt-0.5">
+                  {(measurement_plan.data_sources as string[]).map((src, i) => (
+                    <span key={i} className="text-xs px-2 py-0.5 rounded-full"
+                      style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)' }}>{src}</span>
+                  ))}
+                </div>
+              } />
+            )}
+            {measurement_plan.owner && (
+              <Row icon={<Users size={14} />} label="Owner" value={String(measurement_plan.owner)} />
+            )}
+          </div>
+          {Array.isArray(measurement_plan.notes) && measurement_plan.notes.length > 0 && (
+            <div className="mt-3 flex flex-col gap-1.5">
+              {(measurement_plan.notes as string[]).map((note, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <AlertTriangle size={11} className="text-yellow-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-yellow-400/70">{note}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </Section>
+      )}
+
+      {/* ── Market Uplift Simulation ── */}
       {Array.isArray(simulation_report.scenarios) && simulation_report.scenarios.length > 0 && (
-        <Section num={approvedAssumptions.length > 0 ? '06' : '05'} title="Market Uplift Simulation">
+        <Section num={S()} title="Market Uplift Simulation">
           <div className="rounded-xl overflow-hidden border border-white/6 mb-3">
             <table className="w-full">
               <thead>
@@ -536,8 +693,8 @@ export function CampaignReport({
         </Section>
       )}
 
-      {/* ── 07. QA Findings ── */}
-      <Section num={approvedAssumptions.length > 0 ? '07' : '06'} title="QA Findings">
+      {/* ── QA Findings ── */}
+      <Section num={S()} title="QA Findings">
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div className="glass rounded-xl p-4">
             <p className="text-xs text-white/30 mb-1">Brief-to-Plan Alignment</p>
@@ -585,9 +742,9 @@ export function CampaignReport({
         )}
       </Section>
 
-      {/* ── 08. Stakeholder Handoff ── */}
+      {/* ── Stakeholder Handoff ── */}
       {handoff_packet.stakeholder_sections && (
-        <Section num={approvedAssumptions.length > 0 ? '08' : '07'} title="Stakeholder Handoff">
+        <Section num={S()} title="Stakeholder Handoff">
           <div className="grid grid-cols-2 gap-3">
             {Object.entries(handoff_packet.stakeholder_sections as Record<string, string[]>).map(([team, items]) => (
               <div key={team} className="glass rounded-xl p-4">
@@ -609,9 +766,9 @@ export function CampaignReport({
         </Section>
       )}
 
-      {/* ── 09. Risk Register ── */}
+      {/* ── Risk Register ── */}
       {Array.isArray(handoff_packet.risk_register) && (
-        <Section num={approvedAssumptions.length > 0 ? '09' : '08'} title="Risk Register">
+        <Section num={S()} title="Risk Register">
           <div className="rounded-xl overflow-hidden border border-white/6">
             <table className="w-full">
               <thead>
@@ -638,9 +795,9 @@ export function CampaignReport({
         </Section>
       )}
 
-      {/* ── 10. Next Steps ── */}
+      {/* ── Next Steps ── */}
       {Array.isArray(handoff_packet.next_steps) && (
-        <Section num={approvedAssumptions.length > 0 ? '10' : '09'} title="Next Steps">
+        <Section num={S()} title="Next Steps">
           <div className="flex flex-col gap-2">
             {(handoff_packet.next_steps as string[]).map((step, i) => (
               <div key={i} className="glass rounded-xl px-4 py-3 flex items-center gap-4">

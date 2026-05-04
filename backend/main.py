@@ -18,7 +18,7 @@ sys.path.insert(0, str(_root))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routes import router
+from backend.api.routes import router
 
 app = FastAPI(
     title="Campaign Readiness Copilot API",

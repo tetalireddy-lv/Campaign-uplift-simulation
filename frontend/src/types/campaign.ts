@@ -250,7 +250,8 @@ export type WorkflowStep =
   | 'readiness'
   | 'ambiguity'
   | 'plan'
-  | 'handoff';
+  | 'handoff'
+  | 'report';
 
 export interface WorkflowState {
   sessionId: string | null;
